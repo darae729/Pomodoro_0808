@@ -1,0 +1,133 @@
+--현아님 DB
+--------------------------------------------------------------------------------------------------
+--테이블 스페이스 만들기
+--주의! 경로 수정 필요
+create tablespace pomodoro
+datafile 'C:\oraclexe\app\oracle\oradata\XE\pomodoro.dbf' size 5M;
+
+create user pomodoro
+identified by 1234
+default tablespace pomodoro
+quota unlimited on pomodoro;
+
+grant create session, create table, create sequence to pomodoro;
+
+conn pomodoro/1234
+
+--테이블 만들기
+create table client(
+client_idx number primary key
+, name varchar2(20)
+, id varchar2(20)
+, pass varchar2(64)
+, nickname varchar2(20)
+, email varchar2(800)
+);
+--이메일 컬럼 수정
+--alter table client modify email varchar2(800);
+--시퀀스 만들기
+create sequence seq_client
+increment by 1
+start with 1;
+
+-- 사용자 정보 기입
+insert into client(client_idx, name, id, pass, nickname, email)
+ values(seq_client.nextval, 'tester','test_id', '1234', 'testnickname','test@gmail.com');
+ insert into client(client_idx, name, id, pass, nickname, email)
+ values(seq_client.nextval, 'tester2','abcd', '1234', 'testnickname','test@gmail.com');
+ 
+
+commit;
+
+--승아 DB
+--------------------------------------------------------------------------------------------------
+--날짜 테이블 만들기+외래키(client_idx)
+--------------------------------------------------------------------------------------------------
+create table pomodate(
+	pomodate_idx number primary key
+	, yy number
+	, mm number
+	, dd number
+--어떤 회원의 기록?
+	, client_idx number
+	, constraint fk_cidx foreign key(client_idx) references client(client_idx)
+);
+
+--------------------------------------------------------------------------------------------------
+--토마토 테이블 만들기+외래키(pomodate_idx)
+--------------------------------------------------------------------------------------------------
+create table pomocount(
+	pomocount_idx number primary key
+	, tomato number
+--언제의 기록?
+	, pomodate_idx number
+	, constraint fk_pmidx foreign key(pomodate_idx) references pomodate(pomodate_idx)
+);
+
+--시퀀스 만들기 (날짜테이블)
+create sequence seq_pomodate
+increment by 1
+start with 1;
+
+--시퀀스 만들기 (토마토테이블)
+create sequence seq_pomocount
+increment by 1
+start with 1;
+
+--------------------------------------------------------------------------------------------------
+--회원별 날짜별 토마토 가져오기 (***이건 넣지 마세요 !!***)
+--c.id나 c.name
+select c.id, p.tomato, d.yy, d.mm, d.dd 
+from pomocount p, pomodate d, client c 
+where p.pomodate_idx=d.pomodate_idx and d.client_idx=c.client_idx;
+
+
+--수빈님 DB
+--------------------------------------------------------------------------------------------------
+--todolist 테이블 만들기
+
+CREATE TABLE todolist (
+    task_idx number PRIMARY KEY,
+    yy number NULL,
+    mm number NULL,
+    dd number NULL,
+    todo varchar2(50),
+    complete number DEFAULT 0 NULL,
+    client_idx number NULL,
+    CONSTRAINT fk_clkey FOREIGN KEY (client_idx) REFERENCES client(client_idx)
+);
+
+
+--todolist 시퀀스 만들기
+
+CREATE SEQUENCE task_idx START WITH 1 INCREMENT BY 1;
+
+--다래님 DB
+--------------------------------------------------------------------------------------------------
+----------------------------------
+-- 일정
+----------------------------------
+create table plan(
+  plan_idx number primary key 
+  , yy number 
+  , mm number 
+  , dd number 
+  , diary_title varchar2(40)
+  , diary_content clob
+  , filename varchar2(30)
+  
+  -- 누구의 일정?
+  , client_idx  number 
+  , constraint  fk_client_plan foreign key(client_idx) references client(client_idx)
+);
+
+create sequence seq_plan
+increment by 1
+start with 1;
+
+---------------------------------
+-- 이런 오류가 뜨면서 테이블이 만들어지지 않을때..
+-- unknown command beginning ", client_i..." - rest of line ignored.
+---------------------------------
+set sqlblanklines on;
+
